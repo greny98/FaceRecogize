@@ -6,6 +6,9 @@ pre_trained = App.MobileNetV2(
     include_top=False
 )
 
+for l in pre_trained.layers:
+    l.trainable = False
+
 
 def cnn_feature_extractor(imgs):
     """
@@ -29,6 +32,9 @@ def encoding(imgs, n_units=256):
 def siamese(img1, img2, units=256):
     vec1 = encoding(img1, units)
     vec2 = encoding(img2, units)
-    dist = tf.abs(vec1 - vec2)
-    outputs = L.Dense(1, activation='sigmoid', kernel_initializer=initializers.HeNormal())(dist)
+    vec = L.Subtract()([vec1, vec2])
+    DistanceLayer = Lambda(lambda tensors: tf.abs(tensors))
+    dist = DistanceLayer(vec)
+    outputs = L.Dense(1, activation='sigmoid',
+                      kernel_initializer=initializers.HeNormal())(dist)
     return outputs

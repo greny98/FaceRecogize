@@ -94,3 +94,6 @@ def create_ds(df: pd.DataFrame):
         .batch(32, num_parallel_calls=tf.data.AUTOTUNE).prefetch(tf.data.AUTOTUNE)
     ds_test = ds_test.batch(32, num_parallel_calls=tf.data.AUTOTUNE).prefetch(tf.data.AUTOTUNE)
     return ds_train, ds_test
+
+
+# def create_df_triplet():
