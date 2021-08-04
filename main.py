@@ -21,12 +21,13 @@ if __name__ == '__main__':
     output = siamese(input1, input2)
     model = models.Model(inputs=[input1, input2], outputs=output)
     model.summary()
-    # model.compile(
-    #     loss=losses.binary_crossentropy,
-    #     optimizer=optimizers.Adam(learning_rate=lr),
-    #     metrics=['acc'])
-    # model.fit(
-    #     ds_train,
-    #     validation_data=ds_test,
-    #     epochs=epochs
-    # )
+    model.compile(
+        loss=losses.binary_crossentropy,
+        optimizer=optimizers.Adam(learning_rate=lr),
+        metrics=['acc'])
+    model.fit(
+        ds_train,
+        validation_data=ds_test,
+        epochs=epochs
+    )
+    model.save('model.h5')

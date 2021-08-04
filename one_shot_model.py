@@ -1,7 +1,7 @@
 from libs import *
 
 pre_trained = App.MobileNetV2(
-    input_shape=(224, 224, 3,),
+    input_shape=(300, 300, 3,),
     weights='imagenet',
     include_top=False
 )

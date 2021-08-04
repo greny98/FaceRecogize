@@ -1,6 +1,5 @@
 from libs import *
 import random
-import cv2
 
 
 def get_random(images, used):
@@ -62,7 +61,7 @@ def preprocessing_image(img_path):
     img = tf.io.read_file(img_path)
     img = tf.image.decode_jpeg(img, channels=3)
     img = tf.cast(img, tf.float32)
-    img = tf.image.resize(img, size=(224, 224))
+    img = tf.image.resize(img, size=(300, 300))
     img = img / 127.5 - 1.
     return img
 
@@ -96,4 +95,60 @@ def create_ds(df: pd.DataFrame):
     return ds_train, ds_test
 
 
-# def create_df_triplet():
+def create_df_triplet(image_dir, n_samples=5000):
+    used = {}
+    labels = [os.path.join(image_dir, label)
+              for label in os.listdir(image_dir)]
+    data = []
+    for _ in range(n_samples):
+        # Random anchor and negative
+        anchor_label_idx = random.randint(0, len(labels) - 1)
+        neg_label_idx = anchor_label_idx
+        while neg_label_idx == anchor_label_idx:
+            neg_label_idx = random.randint(0, len(labels) - 1)
+        # List anchor images and negative images
+        anchor_images = [os.path.join(labels[anchor_label_idx], image)
+                         for image in os.listdir(labels[anchor_label_idx])]
+        neg_images = [os.path.join(labels[neg_label_idx], image)
+                      for image in os.listdir(labels[neg_label_idx])]
+        anchor_img = get_random(anchor_images, used)
+        used[anchor_img] = True
+        neg_img = get_random(neg_images, used)
+        used[neg_img] = True
+        pos_img = anchor_img
+        while anchor_img == pos_img:
+            pos_img = get_random(anchor_images, used)
+            used[pos_img] = True
+        data.append([anchor_img, pos_img, neg_img])
+    return pd.DataFrame(data, columns=['anchor', 'pos', 'neg'])
+
+
+def create_ds_triplet(df: pd.DataFrame):
+    anchor = df['anchor']
+    pos = df['pos']
+    neg = df['neg']
+    # tensor slices
+    anchor = tf.data.Dataset.from_tensor_slices(anchor)
+    pos = tf.data.Dataset.from_tensor_slices(pos)
+    neg = tf.data.Dataset.from_tensor_slices(neg)
+
+    # zip
+    def preprocess_triplets(anchor_path, pos_path, neg_path):
+        anchor_img = preprocessing_image(anchor_path)
+        pos_img = preprocessing_image(pos_path)
+        neg_img = preprocessing_image(neg_path)
+        return anchor_img, pos_img, neg_img
+
+    # Create Dataset
+    dataset = tf.data.Dataset.zip((anchor, pos, neg))
+    dataset = dataset.shuffle(buffer_size=1024)
+    dataset = dataset.map(preprocess_triplets)
+    n_samples = len(df)
+    n_train = int(0.85 * n_samples)
+    train_ds = dataset.take(n_train)
+    test_ds = dataset.skip(n_train)
+    # shuffle and batch
+    train_ds = train_ds.shuffle(128, reshuffle_each_iteration=True) \
+        .batch(32, num_parallel_calls=tf.data.AUTOTUNE).prefetch(tf.data.AUTOTUNE)
+    test_ds = test_ds.batch(32, num_parallel_calls=tf.data.AUTOTUNE).prefetch(tf.data.AUTOTUNE)
+    return train_ds, test_ds
