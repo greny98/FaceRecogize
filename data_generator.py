@@ -66,6 +66,15 @@ def preprocessing_image(img_path):
     return img
 
 
+def preprocessing_frame(frame):
+    frame = tf.convert_to_tensor(frame)
+    frame = tf.expand_dims(frame, axis=0)
+    frame = tf.cast(frame, tf.float32)
+    frame = tf.image.resize(frame, size=(300, 300))
+    frame = frame / 127.5 - 1.
+    return frame
+
+
 def create_ds(df: pd.DataFrame):
     imgs1 = df['img1'].values
     imgs2 = df['img2'].values

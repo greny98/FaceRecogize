@@ -19,7 +19,16 @@ if __name__ == '__main__':
     network = create_model()
     siamese_model = SiameseModel(network)
     siamese_model.compile(optimizer=optimizers.Adam(learning_rate=lr))
-    siamese_model.fit(ds_train, epochs=epochs, validation_data=ds_test)
-    siamese_model.save('model.h5')
+    checkpoint_filepath = 'ckpt/checkpoint'
+    model_checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
+        filepath=checkpoint_filepath,
+        save_weights_only=True,
+        save_best_only=True,
+        mode='max',
+        monitor='val_loss'
+    )
+    siamese_model.fit(ds_train, epochs=epochs, validation_data=ds_test,
+                      callbacks=[model_checkpoint_callback])
+
 # df = data_generator.create_df_triplet('data/faces', 5000)
 # df.to_csv('data/triplet.csv', index=False)

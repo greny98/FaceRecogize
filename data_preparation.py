@@ -2,18 +2,16 @@ import time
 import cv2
 import os
 
-haar_path = 'haar_features/haarcascade_frontalcatface.xml'
-
 
 def face_detection(img, classifier):
     # img = cv2.pyrDown(img)
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     gray = cv2.blur(gray, ksize=(3, 3))
-    faces = classifier.detectMultiScale(gray, scaleFactor=1.1, minNeighbors=8)
+    boxes = classifier.detectMultiScale(gray, scaleFactor=1.15, minNeighbors=6)
     results = []
-    for (x, y, w, h) in faces:
+    for (x, y, w, h) in boxes:
         results.append(img[y:y + h, x:x + w, :])
-    return results
+    return results, boxes
 
 
 def crop_face_from_video(vid_file, save_dir, classifier, skip):

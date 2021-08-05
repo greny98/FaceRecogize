@@ -52,7 +52,7 @@ def create_model(target_shape=(300, 300)):
         inputs=[anchor_input, positive_input, negative_input], outputs=distances
     )
 
-    return siamese_network
+    return siamese_network, embedding_model
 
 
 class SiameseModel(models.Model):
